@@ -87,13 +87,25 @@ export async function fetchSeoulCompetitions({ today } = { today: new Date() }) 
     if (meta) candidates.push({ url, name, district: meta.district, type: meta.type });
   }
 
-  // 3) 상세 SportsEvent 수집
+  // 3) 상세 SportsEvent + 신청/요강 링크 수집
   const out = [];
   for (const c of candidates) {
     let ev = null;
+    let applyUrl = "";
+    let guidelineUrl = "";
     try {
       const html = await get(c.url);
       ev = ldJsonBlocks(html).find((b) => b["@type"] === "SportsEvent") || null;
+      for (const m of html.matchAll(/<a\s+[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+        const href = m[1];
+        const txt = m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        if (/^#|javascript:|mailto:|\/signin|\/signup|\/intro|\/app\b/.test(href)) continue;
+        if (/cockcock\.co\.kr\/?($|tournaments\/?$)/.test(href)) continue;
+        // 신청/접수/참가/홈페이지 → 신청 링크 우선
+        if (!applyUrl && /신청|접수|참가|홈페이지|엔트리|등록/.test(txt)) applyUrl = href;
+        // 요강(PDF)
+        if (!guidelineUrl && (/요강/.test(txt) || /\.pdf(\?|$)/i.test(href))) guidelineUrl = href;
+      }
     } catch {
       /* 상세 실패 시 목록 정보만 */
     }
@@ -112,6 +124,8 @@ export async function fetchSeoulCompetitions({ today } = { today: new Date() }) 
       image: ev?.image || "",
       status: start ? deriveStatus(start, end, today) : "미정",
       url: c.url,
+      applyUrl,
+      guidelineUrl,
     });
     await sleep(250);
   }

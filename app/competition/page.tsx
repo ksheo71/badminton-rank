@@ -17,6 +17,8 @@ interface Competition {
   image: string;
   status: "예정" | "진행중" | "종료" | "미정";
   url: string;
+  applyUrl?: string;
+  guidelineUrl?: string;
 }
 interface CompetitionsFile {
   generatedAt: string;
@@ -134,30 +136,33 @@ export default function CompetitionPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((c) => (
-            <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer">
-              <Card className="flex items-stretch gap-4 overflow-hidden p-0 transition-colors hover:border-accent/50">
-                <div className="h-[104px] w-[78px] shrink-0 overflow-hidden border-r border-border bg-bg-elev">
-                  {c.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.image} alt="" className="h-full w-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-2xl">🏸</div>
-                  )}
+            <Card key={c.id} className="flex items-stretch gap-4 overflow-hidden p-0">
+              <div className="h-auto min-h-[112px] w-[84px] shrink-0 overflow-hidden border-r border-border bg-bg-elev">
+                {c.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl">🏸</div>
+                )}
+              </div>
+              <div className="flex flex-1 flex-col justify-center gap-1.5 py-3 pr-4">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge className={TYPE_STYLE[c.type]}>{c.type}</Badge>
+                  <Badge className="bg-bg-elev text-text-dim">{c.district}</Badge>
+                  <Badge className={STATUS_STYLE[c.status]}>{c.status}</Badge>
                 </div>
-                <div className="flex flex-1 flex-col justify-center gap-1.5 py-3 pr-4">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge className={TYPE_STYLE[c.type]}>{c.type}</Badge>
-                    <Badge className="bg-bg-elev text-text-dim">{c.district}</Badge>
-                    <Badge className={STATUS_STYLE[c.status]}>{c.status}</Badge>
-                  </div>
-                  <div className="font-medium text-text">{c.name}</div>
-                  <div className="text-sm text-muted">
-                    📅 {fmtRange(c.startDate, c.endDate)}
-                    {c.venue && <span className="ml-3">📍 {c.venue}</span>}
-                  </div>
+                <div className="font-medium text-text">{c.name}</div>
+                <div className="text-sm text-muted">
+                  📅 {fmtRange(c.startDate, c.endDate)}
+                  {c.venue && <span className="ml-3">📍 {c.venue}</span>}
                 </div>
-              </Card>
-            </a>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {c.applyUrl && <ActionLink href={c.applyUrl} primary>신청하기 ↗</ActionLink>}
+                  {c.guidelineUrl && <ActionLink href={c.guidelineUrl}>대회요강 PDF ↗</ActionLink>}
+                  <ActionLink href={c.url}>상세 정보 ↗</ActionLink>
+                </div>
+              </div>
+            </Card>
           ))}
         </div>
       )}
@@ -176,4 +181,21 @@ function Mini({ label, value, accent }: { label: string; value: number; accent?:
 
 function Badge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${className}`}>{children}</span>;
+}
+
+function ActionLink({ href, children, primary }: { href: string; children: React.ReactNode; primary?: boolean }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+        primary
+          ? "bg-accent text-white hover:opacity-90"
+          : "border border-border text-text-dim hover:border-accent/50 hover:text-accent"
+      }`}
+    >
+      {children}
+    </a>
+  );
 }
