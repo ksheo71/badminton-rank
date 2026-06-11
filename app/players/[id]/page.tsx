@@ -37,7 +37,12 @@ export default function PlayerPage() {
                 <span className="text-2xl" aria-hidden>{flag(p.country)}</span>
               </h1>
               <p className="mt-1 text-sm text-muted">
-                {[countryName(p.country), p.gender === "M" ? "남자" : "여자", hasAge ? `${age}세 (${p.birthYear}년생)` : null]
+                {[
+                  countryName(p.country),
+                  p.gender === "M" ? "남자" : "여자",
+                  hasAge ? `${age}세 (${p.birthYear}년생)` : null,
+                  p.heightCm ? `${p.heightCm}cm` : null,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </p>

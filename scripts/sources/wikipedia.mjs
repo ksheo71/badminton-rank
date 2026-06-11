@@ -132,6 +132,97 @@ async function fetchPhotos(titles) {
   return out;
 }
 
+// 위키데이터 API (wikidata.org)
+async function wdApi(params, attempt = 0) {
+  const url = "https://www.wikidata.org/w/api.php?" + new URLSearchParams({ format: "json", ...params });
+  try {
+    const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  } catch (e) {
+    if (attempt < 2) {
+      await sleep(800 * (attempt + 1));
+      return wdApi(params, attempt + 1);
+    }
+    throw e;
+  }
+}
+
+// 위키 문서(slug→title) → 위키데이터 인물정보.
+// 반환: { photoBySlug(P18 Commons URL), bioBySlug({birthYear, heightCm}) }
+async function fetchPeopleInfo(titleBySlug) {
+  const photoBySlug = {};
+  const bioBySlug = {};
+  const slugByTitle = {};
+  for (const [s, t] of Object.entries(titleBySlug)) if (t && !slugByTitle[t]) slugByTitle[t] = s;
+  const titles = [...new Set(Object.values(titleBySlug))].filter(Boolean);
+
+  // 1) 문서 제목 → 위키데이터 Q-id (en.wiki pageprops)
+  const qidByTitle = {};
+  for (let i = 0; i < titles.length; i += 50) {
+    const batch = titles.slice(i, i + 50);
+    let d;
+    try {
+      d = await api({ action: "query", prop: "pageprops", ppprop: "wikibase_item", redirects: "1", titles: batch.join("|") });
+    } catch {
+      continue;
+    }
+    const q = d.query || {};
+    const remap = {};
+    (q.normalized || []).forEach((n) => (remap[n.from] = n.to));
+    (q.redirects || []).forEach((r) => (remap[r.from] = r.to));
+    const byFinal = {};
+    for (const pid in q.pages || {}) {
+      const p = q.pages[pid];
+      if (p.pageprops?.wikibase_item) byFinal[p.title] = p.pageprops.wikibase_item;
+    }
+    for (const reqTitle of batch) {
+      let f = reqTitle;
+      for (let k = 0; k < 3 && remap[f]; k++) f = remap[f];
+      if (byFinal[f]) qidByTitle[reqTitle] = byFinal[f];
+    }
+    await sleep(200);
+  }
+
+  // 2) Q-id → claims (P18 사진, P569 생년월일, P2048 키)
+  const infoByQid = {};
+  const qids = [...new Set(Object.values(qidByTitle))];
+  for (let i = 0; i < qids.length; i += 50) {
+    const batch = qids.slice(i, i + 50);
+    let d;
+    try {
+      d = await wdApi({ action: "wbgetentities", ids: batch.join("|"), props: "claims" });
+    } catch {
+      continue;
+    }
+    for (const q of batch) {
+      const c = d.entities?.[q]?.claims || {};
+      const img = c.P18?.[0]?.mainsnak?.datavalue?.value || null;
+      const dob = c.P569?.[0]?.mainsnak?.datavalue?.value?.time || null;
+      let h = c.P2048?.[0]?.mainsnak?.datavalue?.value?.amount || null;
+      let heightCm = null;
+      if (h) {
+        h = parseFloat(h);
+        heightCm = h > 0 && h < 3 ? Math.round(h * 100) : Math.round(h); // m → cm 보정
+      }
+      infoByQid[q] = { image: img, birthYear: dob ? parseInt(dob.slice(1, 5)) : 0, heightCm };
+    }
+    await sleep(200);
+  }
+
+  // 3) slug 로 매핑
+  for (const [title, qid] of Object.entries(qidByTitle)) {
+    const slug = slugByTitle[title];
+    const info = infoByQid[qid];
+    if (!slug || !info) continue;
+    if (info.image) {
+      photoBySlug[slug] = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(info.image.replace(/ /g, "_"))}?width=320`;
+    }
+    bioBySlug[slug] = { birthYear: info.birthYear, heightCm: info.heightCm };
+  }
+  return { photoBySlug, bioBySlug };
+}
+
 // ---- 위키텍스트 파싱 유틸 ----
 
 // 셀 라인에서 실제 내용 추출 ("| style=.. | content" → content)
@@ -504,15 +595,25 @@ export async function generate({ today }) {
   }
   playerIndex.sort((a, b) => a.bestRank - b.bestRank);
 
-  // 등장 선수들의 위키 대표사진 수집 (slug → 썸네일 URL)
+  // 선수 사진 + 인물정보 수집.
+  //  - 위키데이터(P18)를 우선 사진 소스로(커버리지 높음, 생년/키 동반), pageimages 는 폴백.
   const wantTitles = playersOut.map((p) => titleBySlug[p.id]).filter(Boolean);
-  const photoByTitle = await fetchPhotos(wantTitles);
+  const photoByTitle = await fetchPhotos(wantTitles); // pageimages 폴백
+  const { photoBySlug, bioBySlug } = await fetchPeopleInfo(titleBySlug); // 위키데이터
   const photos = {};
+  let bioCount = 0;
   for (const p of playersOut) {
     const t = titleBySlug[p.id];
-    if (t && photoByTitle[t]) photos[p.id] = photoByTitle[t];
+    const photo = photoBySlug[p.id] || (t && photoByTitle[t]) || null;
+    if (photo) photos[p.id] = photo;
+    const bio = bioBySlug[p.id];
+    if (bio) {
+      if (bio.birthYear) p.birthYear = bio.birthYear;
+      if (bio.heightCm) p.heightCm = bio.heightCm;
+      if (bio.birthYear || bio.heightCm) bioCount++;
+    }
   }
-  console.log(`[wikipedia] 선수 사진 ${Object.keys(photos).length}/${playersOut.length}명 확보`);
+  console.log(`[wikipedia] 선수 사진 ${Object.keys(photos).length}/${playersOut.length}명, 인물정보 ${bioCount}명`);
 
   const meta = {
     generatedAt: today.toISOString(),

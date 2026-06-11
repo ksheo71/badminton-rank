@@ -78,6 +78,7 @@ export interface PlayerProfile {
   country: string;
   gender: "M" | "F";
   birthYear: number;
+  heightCm?: number;
   currentRankings: Partial<Record<CategoryKey, number>>;
   bestRanking: { category: CategoryKey; rank: number };
   rankingHistory: RankingHistoryPoint[];
