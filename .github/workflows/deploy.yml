@@ -1,0 +1,21 @@
+name: Deploy to badminton.myazit.kr
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-badminton
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # 맥미니에 설치한 badminton-rank 전용 self-hosted 러너에서 직접 실행한다 (SSH 불필요).
+    # 러너는 ksheo71/badminton-rank 레포에만 등록되어 다른 서비스 러너와 충돌하지 않는다.
+    runs-on: self-hosted
+    steps:
+      - name: Run deploy.sh on the Mac mini
+        # 러너가 맥미니에서 도는 프로세스이므로, 운영 트리의 deploy.sh 를 그대로 호출한다.
+        # deploy.sh 가 origin/main 동기화 + 데이터 배치 + docker compose 빌드/기동 + 헬스체크를 수행한다.
+        run: /opt/stack/services/public/myazit.kr/badminton-rank/repo/scripts/deploy.sh

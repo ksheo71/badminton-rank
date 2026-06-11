@@ -1,0 +1,35 @@
+# 셔틀랭크(badminton-rank) 맥미니 상시 운영.
+#
+# pdfsnap / art-galleries 와 동일하게 공용 Cloudflare Tunnel(edge_shared)에 합류한다.
+# 외부 노출은 컨테이너 포트 발행이 아니라, 공용 cloudflared 가 edge_shared 안에서
+#   badminton.myazit.kr → http://badminton-rank-frontend:3200
+# 으로 라우팅한다(Cloudflare Zero Trust 대시보드 Public Hostname 설정).
+#
+# 데이터: 호스트 야간 배치(scripts/wikipedia-batch.sh)가 ./public/data 에 JSON 을 생성하고,
+# 컨테이너는 그걸 읽기전용 마운트로 서빙한다(Next 는 public/ 을 디스크에서 즉시 서빙).
+#
+# 사용: cd repo && docker compose up -d --build
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: badminton-rank-frontend:latest
+    container_name: badminton-rank-frontend
+    restart: unless-stopped
+    # - expose: edge_shared 내부망(cloudflared)에서 접근 → 외부 공개 경로
+    # - ports : 맥미니 호스트 로컬 확인용 (http://localhost:3200)
+    expose:
+      - "3200"
+    ports:
+      - "127.0.0.1:3200:3200"
+    volumes:
+      - ./public/data:/app/public/data:ro
+    networks:
+      - edge_shared
+
+# 공용 cloudflared compose 가 생성/소유하는 외부 네트워크에 합류한다.
+networks:
+  edge_shared:
+    name: edge_shared
+    external: true
