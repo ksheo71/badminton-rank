@@ -6,6 +6,7 @@ import { useJson } from "@/lib/useData";
 import type { PlayerIndexItem } from "@/lib/types";
 import { CATEGORY_SHORT, countryName, flag } from "@/lib/format";
 import { Card, Spinner, ErrorBox, SectionTitle } from "@/components/ui";
+import { Avatar } from "@/components/Avatar";
 
 export default function PlayersPage() {
   const { data, error, loading } = useJson<PlayerIndexItem[]>("/data/players/index.json");
@@ -74,9 +75,12 @@ export default function PlayersPage() {
           <Link key={p.id} href={`/players/${p.id}`}>
             <Card className="flex items-center justify-between p-4 transition-colors hover:border-accent/50 hover:bg-bg-elev">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{flag(p.country)}</span>
+                <Avatar id={p.id} name={p.name} country={p.country} size={44} />
                 <div>
-                  <div className="font-medium">{p.name}</div>
+                  <div className="flex items-center gap-1.5 font-medium">
+                    {p.name}
+                    <span className="text-sm" aria-hidden>{flag(p.country)}</span>
+                  </div>
                   <div className="text-xs text-text-dim">
                     {countryName(p.country)} · {p.categories.map((c) => CATEGORY_SHORT[c]).join(", ")}
                   </div>

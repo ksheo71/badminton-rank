@@ -3,6 +3,7 @@
 import type { RankingEntry, HistoryEntry } from "@/lib/types";
 import { formatNumber } from "@/lib/format";
 import { CountryTag, PlayerLinks, RankChange } from "./ui";
+import { AvatarGroup } from "./Avatar";
 
 type Row = RankingEntry | HistoryEntry;
 
@@ -52,7 +53,10 @@ export default function RankingsTable({
                   </td>
                 )}
                 <td className="px-3 py-2.5 font-medium">
-                  <PlayerLinks players={r.players} />
+                  <span className="flex items-center gap-2.5">
+                    <AvatarGroup players={r.players} country={r.country} size={28} />
+                    <PlayerLinks players={r.players} />
+                  </span>
                 </td>
                 <td className="px-3 py-2.5">
                   <CountryTag code={r.country} />

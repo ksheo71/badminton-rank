@@ -56,6 +56,7 @@ async function main() {
     await writeJson(`matches/${m.year}.json`, m);
   }
   await writeJson("players/index.json", ds.playerIndex);
+  await writeJson("players/photos.json", ds.photos || {});
   for (const p of ds.players) {
     await writeJson(`players/${p.id}.json`, p);
   }

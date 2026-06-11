@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { PhotosProvider } from "@/components/Photos";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,13 +20,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className={inter.variable}>
       <body className="min-h-screen bg-bg text-text antialiased">
-        <Navbar />
-        <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
+        <PhotosProvider>
+          <Navbar />
+          <main className="mx-auto max-w-6xl px-6 py-12">{children}</main>
         <footer className="border-t border-border bg-paper">
           <div className="mx-auto max-w-6xl px-6 py-12 text-xs text-muted">
             셔틀랭크 · 데이터 출처: 위키피디아 (BWF World Tour) · 순위는 대회 결과 기반 시즌 성적 순위(공식 주간 랭킹 아님) · 야간 배치로 매일 갱신
           </div>
         </footer>
+        </PhotosProvider>
       </body>
     </html>
   );

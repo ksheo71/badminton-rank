@@ -93,6 +93,45 @@ async function getPageWikitext(page) {
   return d.parse?.wikitext?.["*"] || null;
 }
 
+// 문서 제목들 → 대표사진 썸네일 URL 맵 (title → url). pageimages, 50개씩 배치.
+async function fetchPhotos(titles) {
+  const out = {};
+  const uniq = [...new Set(titles)].filter(Boolean);
+  for (let i = 0; i < uniq.length; i += 50) {
+    const batch = uniq.slice(i, i + 50);
+    let d;
+    try {
+      d = await api({
+        action: "query",
+        prop: "pageimages",
+        piprop: "thumbnail",
+        pithumbsize: "240",
+        pilimit: "50",
+        redirects: "1",
+        titles: batch.join("|"),
+      });
+    } catch {
+      continue;
+    }
+    const q = d.query || {};
+    const remap = {}; // requested → final(정규화/리디렉션)
+    (q.normalized || []).forEach((n) => (remap[n.from] = n.to));
+    (q.redirects || []).forEach((r) => (remap[r.from] = r.to));
+    const byFinal = {};
+    for (const pid in q.pages || {}) {
+      const p = q.pages[pid];
+      if (p.thumbnail?.source) byFinal[p.title] = p.thumbnail.source;
+    }
+    for (const reqTitle of batch) {
+      let f = reqTitle;
+      for (let k = 0; k < 3 && remap[f]; k++) f = remap[f];
+      if (byFinal[f]) out[reqTitle] = byFinal[f];
+    }
+    await sleep(200);
+  }
+  return out;
+}
+
 // ---- 위키텍스트 파싱 유틸 ----
 
 // 셀 라인에서 실제 내용 추출 ("| style=.. | content" → content)
@@ -123,22 +162,31 @@ function rowToCells(rowText) {
   return cells;
 }
 
-// 셀에서 {{flagicon|XXX}} [[Link|Name]] 들을 추출 → {players:[name], country:alpha2}
+// 셀에서 {{flagicon|XXX}} [[Link|Name]] 들을 추출
+// → {players:[표시이름], titles:[문서제목], country:alpha2}
+// titles 는 위키 문서 대표사진(pageimages) 조회용으로 링크 대상을 그대로 보존.
 function parseEntry(cell) {
   if (!cell) return null;
   const re = /\{\{flag(?:icon|athlete|IOCathlete)\|([A-Za-z]{3})[^}]*\}\}\s*(?:'''')?\s*\[\[([^\]]+)\]\]/g;
   const players = [];
+  const titles = [];
   let country = null;
   let m;
   while ((m = re.exec(cell)) !== null) {
     if (!country) country = toAlpha2(m[1].toUpperCase());
-    let name = m[2];
-    if (name.includes("|")) name = name.split("|").pop();
+    const raw = m[2];
+    let title = raw, name = raw;
+    if (raw.includes("|")) {
+      const idx = raw.indexOf("|");
+      title = raw.slice(0, idx).trim();
+      name = raw.slice(idx + 1).trim();
+    }
     name = name.replace(/\s*\(badminton\)\s*/i, "").trim();
     players.push(name);
+    titles.push(title.trim());
   }
   if (!players.length) return null;
-  return { players, country: country || "" };
+  return { players, titles, country: country || "" };
 }
 
 // 월별 Finals 표 텍스트 → 대회 배열
@@ -213,7 +261,7 @@ function addFinal(t, idx, champCell, runnerCell) {
   const champion = parseEntry(champCell);
   const runnerUp = parseEntry(runnerCell);
   if (!champion) return;
-  t.finals.push({ category: CAT_ORDER[idx], champion, runnerUp: runnerUp || { players: [], country: "" }, score: "" });
+  t.finals.push({ category: CAT_ORDER[idx], champion, runnerUp: runnerUp || { players: [], titles: [], country: "" }, score: "" });
 }
 
 // 페이지 전체 위키텍스트 → 그 해 대회 배열
@@ -262,6 +310,22 @@ export async function generate({ today }) {
   if (!byYear.size) throw new Error("위키피디아에서 BWF World Tour 데이터를 가져오지 못했습니다.");
 
   const years = [...byYear.keys()].sort((a, b) => b - a);
+
+  // slug → 위키 문서 제목 (대표사진 조회용)
+  const titleBySlug = {};
+  for (const y of years) {
+    for (const t of byYear.get(y)) {
+      for (const f of t.finals) {
+        for (const side of [f.champion, f.runnerUp]) {
+          if (!side) continue;
+          (side.players || []).forEach((n, i) => {
+            const s = slug(n);
+            if (!titleBySlug[s]) titleBySlug[s] = (side.titles && side.titles[i]) || n;
+          });
+        }
+      }
+    }
+  }
 
   // 연도별 종목별 시즌 성적 순위 산출
   // standings[year][cat] = [{rank, key, players:[{id,name}], country, points, tournaments, titles}]
@@ -440,6 +504,16 @@ export async function generate({ today }) {
   }
   playerIndex.sort((a, b) => a.bestRank - b.bestRank);
 
+  // 등장 선수들의 위키 대표사진 수집 (slug → 썸네일 URL)
+  const wantTitles = playersOut.map((p) => titleBySlug[p.id]).filter(Boolean);
+  const photoByTitle = await fetchPhotos(wantTitles);
+  const photos = {};
+  for (const p of playersOut) {
+    const t = titleBySlug[p.id];
+    if (t && photoByTitle[t]) photos[p.id] = photoByTitle[t];
+  }
+  console.log(`[wikipedia] 선수 사진 ${Object.keys(photos).length}/${playersOut.length}명 확보`);
+
   const meta = {
     generatedAt: today.toISOString(),
     source: "wikipedia",
@@ -450,7 +524,7 @@ export async function generate({ today }) {
     tournamentCountThisYear: byYear.get(latest)?.length || 0,
   };
 
-  return { meta, rankings, history, players: playersOut, playerIndex, matches };
+  return { meta, rankings, history, players: playersOut, playerIndex, matches, photos };
 }
 
 // 단독 실행 시 파싱 점검: node scripts/sources/wikipedia.mjs 2024

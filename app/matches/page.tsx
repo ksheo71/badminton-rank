@@ -5,6 +5,7 @@ import { useJson } from "@/lib/useData";
 import type { CategoryKey, Meta, MatchesFile, Tournament } from "@/lib/types";
 import { CATEGORY_LABEL, CATEGORY_ORDER, flag } from "@/lib/format";
 import { Card, Spinner, ErrorBox, SectionTitle } from "@/components/ui";
+import { AvatarGroup } from "@/components/Avatar";
 
 export default function MatchesPage() {
   const { data: meta, error, loading } = useJson<Meta>("/data/meta.json");
@@ -89,12 +90,16 @@ function TournamentCard({ t }: { t: Tournament }) {
                   <tr key={f.category} className="border-t border-border/60">
                     <td className="px-2 py-2 whitespace-nowrap text-text-dim">{CATEGORY_LABEL[f.category as CategoryKey]}</td>
                     <td className="px-2 py-2 font-medium">
-                      <span className="mr-1">{flag(f.champion.country)}</span>
-                      {f.champion.players.join(" / ")}
+                      <span className="flex items-center gap-2">
+                        <AvatarGroup players={f.champion.players.map((n) => ({ name: n }))} country={f.champion.country} size={24} />
+                        {f.champion.players.join(" / ")}
+                      </span>
                     </td>
                     <td className="px-2 py-2 text-text-dim">
-                      <span className="mr-1">{flag(f.runnerUp.country)}</span>
-                      {f.runnerUp.players.join(" / ")}
+                      <span className="flex items-center gap-2">
+                        <AvatarGroup players={f.runnerUp.players.map((n) => ({ name: n }))} country={f.runnerUp.country} size={24} />
+                        {f.runnerUp.players.join(" / ")}
+                      </span>
                     </td>
                     <td className="px-2 py-2 tabular-nums text-text-dim">{f.score}</td>
                   </tr>

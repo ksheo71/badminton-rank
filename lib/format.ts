@@ -35,6 +35,19 @@ export const CATEGORY_SHORT: Record<CategoryKey, string> = {
 
 export const CATEGORY_ORDER: CategoryKey[] = ["MS", "WS", "MD", "WD", "XD"];
 
+// 선수 이름 → slug (배치의 slug() 와 동일 규칙). 사진 맵(photos.json) 조회용.
+export function playerSlug(name: string): string {
+  return (
+    "w-" +
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
+}
+
 export function formatNumber(n: number): string {
   return n.toLocaleString("ko-KR");
 }

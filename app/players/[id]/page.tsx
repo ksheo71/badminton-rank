@@ -6,6 +6,7 @@ import { useJson } from "@/lib/useData";
 import type { CategoryKey, PlayerProfile } from "@/lib/types";
 import { CATEGORY_LABEL, countryName, flag, formatNumber } from "@/lib/format";
 import { Card, Spinner, ErrorBox } from "@/components/ui";
+import { Avatar, AvatarGroup } from "@/components/Avatar";
 import RankingChart from "@/components/RankingChart";
 
 export default function PlayerPage() {
@@ -29,9 +30,12 @@ export default function PlayerPage() {
       <Card className="p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="text-5xl">{flag(p.country)}</span>
+            <Avatar id={p.id} name={p.name} country={p.country} size={84} />
             <div>
-              <h1 className="text-3xl font-light tracking-tight text-text">{p.name}</h1>
+              <h1 className="flex items-center gap-2 text-3xl font-light tracking-tight text-text">
+                {p.name}
+                <span className="text-2xl" aria-hidden>{flag(p.country)}</span>
+              </h1>
               <p className="mt-1 text-sm text-muted">
                 {[countryName(p.country), p.gender === "M" ? "남자" : "여자", hasAge ? `${age}세 (${p.birthYear}년생)` : null]
                   .filter(Boolean)
@@ -98,8 +102,14 @@ export default function PlayerPage() {
                   <td className="px-2 py-2.5">{m.tournament}</td>
                   <td className="px-2 py-2.5 text-text-dim">{m.round}</td>
                   <td className="px-2 py-2.5">
-                    <span className="mr-1">{flag(m.opponentCountry)}</span>
-                    {m.opponent}
+                    <span className="flex items-center gap-2">
+                      <AvatarGroup
+                        players={m.opponent.split(" / ").map((n) => ({ name: n.trim() }))}
+                        country={m.opponentCountry}
+                        size={24}
+                      />
+                      {m.opponent}
+                    </span>
                   </td>
                   <td className="px-2 py-2.5">
                     <span
