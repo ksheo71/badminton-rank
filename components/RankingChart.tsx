@@ -13,12 +13,13 @@ import {
 import type { CategoryKey, RankingHistoryPoint } from "@/lib/types";
 import { CATEGORY_LABEL, CATEGORY_ORDER } from "@/lib/format";
 
+// 그라데이션 팔레트(DESIGN 제어 색): iris → magenta → ember → solar → lumen
 const COLORS: Record<CategoryKey, string> = {
-  MS: "#4ade80",
-  WS: "#38bdf8",
-  MD: "#f472b6",
-  WD: "#fbbf24",
-  XD: "#a78bfa",
+  MS: "#533afd",
+  WS: "#f72df3",
+  MD: "#ff6118",
+  WD: "#ffbb00",
+  XD: "#8087ff",
 };
 
 export default function RankingChart({ history }: { history: RankingHistoryPoint[] }) {
@@ -44,26 +45,27 @@ export default function RankingChart({ history }: { history: RankingHistoryPoint
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={rows} margin={{ top: 8, right: 16, bottom: 0, left: -8 }}>
-          <CartesianGrid stroke="#232c45" strokeDasharray="3 3" />
-          <XAxis dataKey="year" stroke="#9aa6c0" fontSize={12} tickLine={false} />
+          <CartesianGrid stroke="#e5edf5" strokeDasharray="3 3" />
+          <XAxis dataKey="year" stroke="#64748d" fontSize={12} tickLine={false} />
           <YAxis
             reversed
             domain={[1, "dataMax"]}
             allowDecimals={false}
-            stroke="#9aa6c0"
+            stroke="#64748d"
             fontSize={12}
             tickLine={false}
             width={36}
-            label={{ value: "순위", angle: -90, position: "insideLeft", fill: "#9aa6c0", fontSize: 11 }}
+            label={{ value: "순위", angle: -90, position: "insideLeft", fill: "#64748d", fontSize: 11 }}
           />
           <Tooltip
             contentStyle={{
-              background: "#161d31",
-              border: "1px solid #232c45",
-              borderRadius: 8,
+              background: "#ffffff",
+              border: "1px solid #dce5f0",
+              borderRadius: 4,
               fontSize: 12,
+              boxShadow: "rgba(50, 50, 93, 0.12) 0px 16px 32px 0px",
             }}
-            labelStyle={{ color: "#e6eaf2" }}
+            labelStyle={{ color: "#061b31" }}
             formatter={(v: number, name: string) => [`${v}위`, CATEGORY_LABEL[name as CategoryKey]]}
           />
           <Legend formatter={(name) => CATEGORY_LABEL[name as CategoryKey]} wrapperStyle={{ fontSize: 12 }} />

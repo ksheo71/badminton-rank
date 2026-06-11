@@ -29,7 +29,7 @@ export default function MatchesPage() {
             key={y}
             onClick={() => setYear(y)}
             className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-              activeYear === y ? "bg-accent-2 font-semibold text-bg" : "border border-border text-text-dim hover:text-text"
+              activeYear === y ? "bg-accent font-medium text-white" : "border border-border bg-paper text-text-dim hover:text-text"
             }`}
           >
             {y}

@@ -31,8 +31,8 @@ export default function PlayerPage() {
           <div className="flex items-center gap-4">
             <span className="text-5xl">{flag(p.country)}</span>
             <div>
-              <h1 className="text-2xl font-bold">{p.name}</h1>
-              <p className="text-sm text-text-dim">
+              <h1 className="text-3xl font-light tracking-tight text-text">{p.name}</h1>
+              <p className="mt-1 text-sm text-muted">
                 {[countryName(p.country), p.gender === "M" ? "남자" : "여자", hasAge ? `${age}세 (${p.birthYear}년생)` : null]
                   .filter(Boolean)
                   .join(" · ")}
@@ -71,13 +71,13 @@ export default function PlayerPage() {
 
       {/* Ranking trend */}
       <Card className="p-5">
-        <h2 className="mb-4 text-lg font-bold">연도별 랭킹 추이</h2>
+        <h2 className="mb-4 text-lg font-medium">연도별 랭킹 추이</h2>
         <RankingChart history={p.rankingHistory} />
       </Card>
 
       {/* Recent finals */}
       <Card className="p-5">
-        <h2 className="mb-1 text-lg font-bold">최근 결승</h2>
+        <h2 className="mb-1 text-lg font-medium">최근 결승</h2>
         <p className="mb-4 text-xs text-text-dim">대회 결승 진출 기록 (위키피디아 기준)</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

@@ -29,18 +29,27 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <section className="rounded-2xl border border-border bg-gradient-to-br from-bg-card to-bg-elev p-6 sm:p-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <section className="relative overflow-hidden">
+        <div
+          className="hero-halo pointer-events-none absolute -right-24 -top-16 h-[380px] w-[62%]"
+          aria-hidden
+        />
+        <div className="relative flex flex-wrap items-end justify-between gap-6 py-4">
           <div>
-            <h1 className="text-2xl font-bold sm:text-3xl">세계 배드민턴 랭킹 대시보드</h1>
-            <p className="mt-2 max-w-xl text-sm text-text-dim">
+            <p className="mb-3 text-xs uppercase tracking-[0.12em] text-muted">
+              BWF World Tour · {meta.years[meta.years.length - 1]}–{meta.currentYear}
+            </p>
+            <h1 className="gradient-text max-w-2xl text-4xl font-light leading-[1.07] tracking-tight sm:text-5xl">
+              세계 배드민턴 랭킹 대시보드
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-text-dim">
               상위권 선수들의 시즌 성적 순위, 연도별 랭킹, 대회·경기 결과를 한눈에. 위키피디아 BWF World Tour 데이터를 야간 배치로 매일 갱신합니다.
             </p>
           </div>
-          <div className="text-right text-xs text-text-dim">
+          <div className="text-right text-xs text-muted">
             <div>최종 갱신</div>
             <div className="text-sm font-medium text-text">{formatDate(meta.generatedAt)}</div>
-            <div className="mt-1">출처: {meta.source === "mock" ? "데모(목업)" : meta.source}</div>
+            <div className="mt-1">출처: {meta.source === "mock" ? "데모(목업)" : "위키피디아"}</div>
           </div>
         </div>
       </section>

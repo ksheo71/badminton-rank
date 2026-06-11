@@ -40,13 +40,13 @@ export function CategoryTabs({
   long?: boolean;
 }) {
   return (
-    <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border bg-bg-elev p-1">
+    <div className="inline-flex flex-wrap gap-1 rounded-md border border-border bg-bg-elev p-1">
       {CATEGORY_ORDER.map((c) => (
         <button
           key={c}
           onClick={() => onChange(c)}
           className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-            value === c ? "bg-accent text-bg font-semibold" : "text-text-dim hover:text-text"
+            value === c ? "bg-accent text-white font-medium" : "text-text-dim hover:text-text"
           }`}
         >
           {long ? CATEGORY_LABEL[c] : CATEGORY_SHORT[c]}
@@ -93,9 +93,9 @@ export function PlayerLinks({ players }: { players: { id: string; name: string }
 
 export function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
   return (
-    <div className="mb-4">
-      <h2 className="text-lg font-bold">{children}</h2>
-      {sub && <p className="mt-0.5 text-sm text-text-dim">{sub}</p>}
+    <div className="mb-5">
+      <h2 className="gradient-text text-2xl font-light tracking-tight">{children}</h2>
+      {sub && <p className="mt-1 text-sm text-muted">{sub}</p>}
     </div>
   );
 }

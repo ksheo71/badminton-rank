@@ -1,47 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --bg: #0b0f1a;
-  --bg-elev: #121829;
-  --bg-card: #161d31;
-  --border: #232c45;
-  --text: #e6eaf2;
-  --text-dim: #9aa6c0;
-  --accent: #4ade80;
-  --accent-2: #38bdf8;
-  --up: #34d399;
-  --down: #f87171;
-}
+/*
+  Stripe 스타일 라이트 테마 (DESIGN.md).
+  - 캔버스: Mist(#e5edf5), 카드: 흰색, 잉크: Midnight Ink
+  - 단일 액센트: Electric Iris(#533afd)
+  - 라운드는 전부 4px (Stripe 디자인 규율) — @theme 에서 radius 토큰을 4px 로 고정해
+    기존 rounded-lg/xl/2xl 클래스도 자동으로 4px 로 렌더된다.
+  - 기존 컴포넌트의 시맨틱 토큰(bg/bg-card/text/accent/up/down…)을 새 팔레트로 리매핑.
+*/
+@theme {
+  /* 시맨틱 색 (컴포넌트가 쓰는 토큰 이름 유지) */
+  --color-bg: #e5edf5; /* Mist — 캔버스 */
+  --color-bg-elev: #f8fafd; /* Snow — 내비/입력/호버 */
+  --color-bg-card: #ffffff; /* Paper — 카드 */
+  --color-border: #dce5f0; /* 헤어라인 */
+  --color-text: #061b31; /* Midnight Ink */
+  --color-text-dim: #50617a; /* Steel — 본문/보조 */
+  --color-muted: #64748d; /* Slate — 캡션 */
+  --color-accent: #533afd; /* Electric Iris */
+  --color-accent-2: #8087ff; /* Lumen Violet */
+  --color-up: #1f9254; /* 순위 상승(기능색) */
+  --color-down: #d14343; /* 순위 하락(기능색) */
+  --color-paper: #ffffff;
+  --color-iris-glow: #d6d9fc;
+  --color-periwinkle: #e2e4ff;
 
-@theme inline {
-  --color-bg: var(--bg);
-  --color-bg-elev: var(--bg-elev);
-  --color-bg-card: var(--bg-card);
-  --color-border: var(--border);
-  --color-text: var(--text);
-  --color-text-dim: var(--text-dim);
-  --color-accent: var(--accent);
-  --color-accent-2: var(--accent-2);
-  --color-up: var(--up);
-  --color-down: var(--down);
+  /* 폰트 (sohne-var 대체: Inter) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* 라운드 4px 규율 */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --radius-3xl: 4px;
+
+  /* 그림자 (DESIGN 토큰) — 표준 카드엔 쓰지 않음 */
+  --shadow-pop: rgba(50, 50, 93, 0.12) 0px 16px 32px 0px;
 }
 
 html,
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" on, "ss01" on;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 시그니처: 그라데이션 텍스트 (Electric Iris → Steel) */
+.gradient-text {
+  background-image: linear-gradient(95deg, #533afd 0%, #6a5cf0 40%, #50617a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 히어로 우측 그라데이션 헤일로 (분위기용, 콘텐츠 뒤 아님) */
+.hero-halo {
+  background: radial-gradient(
+    circle at 72% 48%,
+    rgba(127, 125, 252, 0.55),
+    rgba(244, 75, 204, 0.32) 34%,
+    rgba(255, 187, 0, 0.12) 52%,
+    rgba(229, 237, 245, 0) 68%
+  );
+  filter: blur(8px);
+}
+
+/* 헤드라인은 가볍게 — whisper authority */
+h1,
+h2 {
+  font-weight: 300;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: #c7d3e2 transparent;
 }
 ::-webkit-scrollbar {
   height: 8px;
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: #c7d3e2;
   border-radius: 8px;
 }

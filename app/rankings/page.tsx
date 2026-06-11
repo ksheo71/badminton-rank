@@ -36,7 +36,7 @@ export default function RankingsPage() {
         <button
           onClick={() => setYear("current")}
           className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-            year === "current" ? "bg-accent-2 font-semibold text-bg" : "border border-border text-text-dim hover:text-text"
+            year === "current" ? "bg-accent font-medium text-white" : "border border-border bg-paper text-text-dim hover:text-text"
           }`}
         >
           현재
@@ -46,7 +46,7 @@ export default function RankingsPage() {
             key={y}
             onClick={() => setYear(y)}
             className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-              year === y ? "bg-accent-2 font-semibold text-bg" : "border border-border text-text-dim hover:text-text"
+              year === y ? "bg-accent font-medium text-white" : "border border-border bg-paper text-text-dim hover:text-text"
             }`}
           >
             {y}

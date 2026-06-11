@@ -9,3 +9,4 @@ public/data
 Dockerfile
 .dockerignore
 README.md
+DESIGN.md
