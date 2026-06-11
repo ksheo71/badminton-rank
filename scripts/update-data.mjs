@@ -61,6 +61,16 @@ async function main() {
     await writeJson(`players/${p.id}.json`, p);
   }
 
+  // 서울 구 단위 대회(구청장배 등) — BWF 데이터와 독립. 실패해도 전체 배치는 계속.
+  try {
+    const { fetchSeoulCompetitions } = await import("./sources/seoul-competitions.mjs");
+    const competitions = await fetchSeoulCompetitions({ today });
+    await writeJson("competitions.json", { generatedAt: today.toISOString(), source: "cockcock", competitions });
+    console.log(`[batch] 서울 구 대회 ${competitions.length}건 → competitions.json`);
+  } catch (e) {
+    console.warn(`[batch] 서울 대회 수집 실패(건너뜀): ${e.message}`);
+  }
+
   const ms = Date.now() - t0;
   console.log(
     `[batch] 완료: 선수 ${ds.players.length}명, 연도 ${ds.history.length}개, 대회 ${ds.matches.reduce(

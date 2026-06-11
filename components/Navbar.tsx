@@ -8,6 +8,7 @@ const NAV = [
   { href: "/rankings", label: "랭킹" },
   { href: "/players", label: "선수" },
   { href: "/matches", label: "대회·경기" },
+  { href: "/competition", label: "구청장배" },
 ];
 
 export default function Navbar() {
