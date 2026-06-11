@@ -9,7 +9,8 @@
 // 반환 형태는 mock.mjs 와 동일(meta/rankings/history/players/playerIndex/matches).
 
 const API = "https://en.wikipedia.org/w/api.php";
-const UA = "badminton-rank-dashboard/0.1 (educational; contact: project author)";
+// 위키미디어 API 정책: 설명+연락처 포함 UA 권장(일반/익명 UA 는 차단·레이트리밋 대상)
+const UA = "badminton-rank/0.1 (https://badminton.myazit.kr; kyoungseok.heo@gmail.com)";
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const CATEGORIES = [
@@ -79,8 +80,8 @@ async function api(params, attempt = 0) {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   } catch (e) {
-    if (attempt < 3) {
-      await sleep(800 * (attempt + 1)); // 백오프 후 재시도
+    if (attempt < 4) {
+      await sleep(1000 * (attempt + 1)); // 백오프 후 재시도 (1~4s)
       return api(params, attempt + 1);
     }
     throw new Error(`wiki API 실패 (${params.page || ""}): ${e.message}`);
@@ -140,8 +141,8 @@ async function wdApi(params, attempt = 0) {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   } catch (e) {
-    if (attempt < 2) {
-      await sleep(800 * (attempt + 1));
+    if (attempt < 4) {
+      await sleep(1000 * (attempt + 1));
       return wdApi(params, attempt + 1);
     }
     throw e;
@@ -380,7 +381,7 @@ function slug(name) {
 const entryKey = (cat, players) => cat + ":" + players.map((p) => p.toLowerCase()).sort().join("+");
 const genderOf = (cat) => (cat === "WS" || cat === "WD" ? "F" : cat === "MS" || cat === "MD" ? "M" : null);
 
-export async function generate({ today }) {
+export async function generate({ today, prev: prevData = { photos: {}, bio: {} } }) {
   const currentYear = today.getUTCFullYear();
   const startYear = 2018; // BWF World Tour 출범 연도
 
@@ -597,23 +598,39 @@ export async function generate({ today }) {
 
   // 선수 사진 + 인물정보 수집.
   //  - 위키데이터(P18)를 우선 사진 소스로(커버리지 높음, 생년/키 동반), pageimages 는 폴백.
+  //  - 이전 산출물(prev)과 merge: 이번 회차 수집이 일시 실패해도 기존 커버리지를 유지(절대 0으로 회귀 안 함).
   const wantTitles = playersOut.map((p) => titleBySlug[p.id]).filter(Boolean);
   const photoByTitle = await fetchPhotos(wantTitles); // pageimages 폴백
   const { photoBySlug, bioBySlug } = await fetchPeopleInfo(titleBySlug); // 위키데이터
-  const photos = {};
+
+  const prevPhotos = prevData?.photos || {};
+  const prevBio = prevData?.bio || {};
+  const photos = { ...prevPhotos }; // 이전 사진 유지 후 신규로 덮어씀
+  const bio = {};
+  let freshPhoto = 0;
   let bioCount = 0;
   for (const p of playersOut) {
     const t = titleBySlug[p.id];
-    const photo = photoBySlug[p.id] || (t && photoByTitle[t]) || null;
-    if (photo) photos[p.id] = photo;
-    const bio = bioBySlug[p.id];
-    if (bio) {
-      if (bio.birthYear) p.birthYear = bio.birthYear;
-      if (bio.heightCm) p.heightCm = bio.heightCm;
-      if (bio.birthYear || bio.heightCm) bioCount++;
+    const newPhoto = photoBySlug[p.id] || (t && photoByTitle[t]) || null;
+    if (newPhoto) {
+      photos[p.id] = newPhoto;
+      freshPhoto++;
+    }
+    // 인물정보: 신규 → 이전 순으로 채움
+    const nb = bioBySlug[p.id] || {};
+    const ob = prevBio[p.id] || {};
+    const birthYear = nb.birthYear || ob.birthYear || 0;
+    const heightCm = nb.heightCm || ob.heightCm || null;
+    if (birthYear || heightCm) {
+      bio[p.id] = { birthYear, heightCm };
+      if (birthYear) p.birthYear = birthYear;
+      if (heightCm) p.heightCm = heightCm;
+      bioCount++;
     }
   }
-  console.log(`[wikipedia] 선수 사진 ${Object.keys(photos).length}/${playersOut.length}명, 인물정보 ${bioCount}명`);
+  console.log(
+    `[wikipedia] 사진 ${Object.keys(photos).length}명(신규 ${freshPhoto}), 인물정보 ${bioCount}명 (merge: 이전 사진 ${Object.keys(prevPhotos).length}·인물 ${Object.keys(prevBio).length})`
+  );
 
   const meta = {
     generatedAt: today.toISOString(),
@@ -625,7 +642,7 @@ export async function generate({ today }) {
     tournamentCountThisYear: byYear.get(latest)?.length || 0,
   };
 
-  return { meta, rankings, history, players: playersOut, playerIndex, matches, photos };
+  return { meta, rankings, history, players: playersOut, playerIndex, matches, photos, bio };
 }
 
 // 단독 실행 시 파싱 점검: node scripts/sources/wikipedia.mjs 2024

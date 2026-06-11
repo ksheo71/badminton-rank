@@ -7,7 +7,7 @@
 // 프론트엔드는 이 JSON을 fetch 하므로, 매일 이 스크립트만 돌리면 재빌드/재배포 없이
 // 최신 데이터가 반영된다. cron 등록 예시는 README.md 참고.
 
-import { mkdir, writeFile, rm, readdir } from "node:fs/promises";
+import { mkdir, writeFile, rm, readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,7 +34,17 @@ async function main() {
   const today = new Date();
   console.log(`[batch] source=${name} date=${today.toISOString()}`);
 
-  const ds = await generate({ today }); // 소스가 async(예: wikipedia)일 수 있음
+  // 이전 산출물(사진/인물정보) 로드 — 이번 수집이 일시 실패해도 커버리지 유지(merge용).
+  const readJson = async (rel) => {
+    try {
+      return JSON.parse(await readFile(join(OUT, rel), "utf8"));
+    } catch {
+      return {};
+    }
+  };
+  const prev = { photos: await readJson("players/photos.json"), bio: await readJson("players/bio.json") };
+
+  const ds = await generate({ today, prev }); // 소스가 async(예: wikipedia)일 수 있음
 
   // 이전 산출물 정리(스테일 방지). 단, OUT 디렉토리 자체는 보존한다 —
   // 운영(Docker)에서 OUT 을 바인드 마운트하므로, 디렉토리를 지웠다 다시 만들면 inode 가
@@ -57,6 +67,7 @@ async function main() {
   }
   await writeJson("players/index.json", ds.playerIndex);
   await writeJson("players/photos.json", ds.photos || {});
+  await writeJson("players/bio.json", ds.bio || {});
   for (const p of ds.players) {
     await writeJson(`players/${p.id}.json`, p);
   }

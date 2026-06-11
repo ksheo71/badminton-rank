@@ -380,7 +380,7 @@ export function generate({ today }) {
     tournamentCountThisYear: matches[0]?.tournaments.length || 0,
   };
 
-  return { meta, rankings, history, players: players_out, playerIndex, matches, photos: {} };
+  return { meta, rankings, history, players: players_out, playerIndex, matches, photos: {}, bio: {} };
 }
 
 function randScore(rng, win) {
