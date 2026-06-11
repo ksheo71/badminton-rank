@@ -1,0 +1,16 @@
+/node_modules
+/.next
+/out
+/build
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+npm-debug.log*
+.env*.local
+logs/
+
+# 배치가 생성하는 산출물 (npm run batch 로 재생성)
+/public/data/
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
