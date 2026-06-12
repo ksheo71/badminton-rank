@@ -1,0 +1,17 @@
+{
+  "name": "셔틀랭크 · 세계 배드민턴 랭킹",
+  "short_name": "셔틀랭크",
+  "description": "세계 배드민턴 상위권 선수들의 랭킹·연도별 성적·대회 결과와 서울 구청장배 정보를 한눈에.",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e5edf5",
+  "theme_color": "#533afd",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
