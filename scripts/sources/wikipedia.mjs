@@ -460,6 +460,21 @@ export async function generate({ today, prev: prevData = { photos: {}, bio: {} }
   const latest = years[0];
   const prev = years[1];
 
+  // 최신 시즌 복식 파트너 (slug → [{id,name,category}])
+  const partnersBySlug = {};
+  for (const cat of ["MD", "WD", "XD"]) {
+    for (const e of standings[latest][cat]) {
+      if (!e.players || e.players.length < 2) continue;
+      for (const a of e.players) {
+        for (const b of e.players) {
+          if (a.id === b.id) continue;
+          const m = (partnersBySlug[a.id] ||= new Map());
+          if (!m.has(b.id)) m.set(b.id, { id: b.id, name: b.name, category: cat });
+        }
+      }
+    }
+  }
+
   // 현재(=최신 시즌) 랭킹 — 전년 대비 변동 포함
   const rankings = {};
   for (const cat of CAT_ORDER) {
@@ -590,6 +605,7 @@ export async function generate({ today, prev: prevData = { photos: {}, bio: {} }
       rankingHistory: p.rankingHistory,
       stats: p.stats,
       recentMatches: p.recentMatches,
+      partners: partnersBySlug[p.id] ? [...partnersBySlug[p.id].values()] : [],
     };
     playersOut.push(out);
     playerIndex.push({ id: p.id, name: p.name, country: p.country, gender: p.gender, bestRank: out.bestRanking.rank, categories: cats });

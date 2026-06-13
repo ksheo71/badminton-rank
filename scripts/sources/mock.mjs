@@ -297,6 +297,20 @@ export function generate({ today }) {
     }
   }
 
+  // 복식 파트너 (id -> Map(partnerId -> {id,name,category}))
+  const partnersByPlayer = {};
+  for (const cat of CATEGORIES) {
+    if (cat.type !== "double") continue;
+    for (const it of todayRanked[cat.key]) {
+      const ps = entryPlayers(it);
+      for (const a of ps) for (const b of ps) {
+        if (a.id === b.id) continue;
+        const m = (partnersByPlayer[a.id] ||= new Map());
+        if (!m.has(b.id)) m.set(b.id, { id: b.id, name: b.name, category: cat.key });
+      }
+    }
+  }
+
   // 선수별 연도별 랭킹 이력
   const histByPlayer = {}; // id -> [{year,category,rank,points}]
   for (const h of history) {
@@ -359,6 +373,7 @@ export function generate({ today }) {
       rankingHistory: hist,
       stats: { matchesPlayed: wins + losses, wins, losses, titles },
       recentMatches,
+      partners: partnersByPlayer[id] ? [...partnersByPlayer[id].values()] : [],
     });
     playerIndex.push({ id, name: p.name, country: p.country, gender: p.gender, bestRank, categories: cats });
   }

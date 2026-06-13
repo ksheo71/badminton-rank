@@ -89,6 +89,7 @@ export interface PlayerProfile {
     titles: number;
   };
   recentMatches: PlayerMatch[];
+  partners?: { id: string; name: string; category: CategoryKey }[];
 }
 
 export interface PlayerIndexItem {
