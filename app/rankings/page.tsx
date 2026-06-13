@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useJson } from "@/lib/useData";
+import { usePersistentState } from "@/lib/usePersistentState";
 import type { CategoryKey, Meta, RankingFile, HistoryFile } from "@/lib/types";
 import { CATEGORY_LABEL, formatDate } from "@/lib/format";
 import { Card, CategoryTabs, Spinner, ErrorBox, SectionTitle } from "@/components/ui";
@@ -9,7 +10,7 @@ import RankingsTable from "@/components/RankingsTable";
 
 export default function RankingsPage() {
   const { data: meta, error, loading } = useJson<Meta>("/data/meta.json");
-  const [cat, setCat] = useState<CategoryKey>("MS");
+  const [cat, setCat] = usePersistentState<CategoryKey>("rank-cat", "MS");
   const [year, setYear] = useState<number | "current">("current");
 
   const current = useJson<RankingFile>(year === "current" ? `/data/rankings/${cat}.json` : null);

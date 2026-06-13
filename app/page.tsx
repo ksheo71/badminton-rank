@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useJson } from "@/lib/useData";
+import { usePersistentState } from "@/lib/usePersistentState";
 import type { CategoryKey, Meta, RankingFile, PlayerIndexItem, PlayerProfile } from "@/lib/types";
 import { CATEGORY_LABEL, formatDate, formatNumber, flag, countryName } from "@/lib/format";
 import { Card, CategoryTabs, Spinner, ErrorBox, SectionTitle, CountryTag } from "@/components/ui";
@@ -11,7 +11,7 @@ import RankingsTable from "@/components/RankingsTable";
 
 export default function HomePage() {
   const { data: meta, error, loading } = useJson<Meta>("/data/meta.json");
-  const [cat, setCat] = useState<CategoryKey>("MS");
+  const [cat, setCat] = usePersistentState<CategoryKey>("rank-cat", "MS");
   const { data: ranking } = useJson<RankingFile>(`/data/rankings/${cat}.json`);
   const { data: index } = useJson<PlayerIndexItem[]>("/data/players/index.json");
   const photos = usePhotos();
