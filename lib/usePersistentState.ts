@@ -9,13 +9,22 @@ export function usePersistentState<T>(key: string, initial: T): [T, (v: T) => vo
   const loaded = useRef(false);
 
   useEffect(() => {
-    try {
-      const s = localStorage.getItem(key);
-      if (s != null) setValue(JSON.parse(s) as T);
-    } catch {
-      /* ignore */
-    }
+    const load = () => {
+      try {
+        const s = localStorage.getItem(key);
+        if (s != null) setValue(JSON.parse(s) as T);
+      } catch {
+        /* ignore */
+      }
+    };
+    load();
     loaded.current = true;
+    // bfcache(뒤로가기 스냅샷)로 복원될 때는 effect가 재실행되지 않으므로 pageshow에서 재동기화.
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) load();
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
   }, [key]);
 
   const set = (v: T) => {
