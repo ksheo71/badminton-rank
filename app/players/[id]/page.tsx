@@ -31,23 +31,34 @@ export default function PlayerPage() {
   useEffect(() => setIdx(0), [baseId]);
   const safeIdx = Math.min(idx, members.length - 1);
   const isPair = members.length > 1;
-  const activeId = members[safeIdx]?.id || baseId;
-
-  // 현재 보고 있는 선수 프로필
-  const { data: p, error, loading } = useJson<PlayerProfile>(`/data/players/${activeId}.json`);
-
   const go = (d: number) => setIdx((i) => Math.max(0, Math.min(members.length - 1, i + d)));
-  const touchX = useRef<number | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => (touchX.current = e.touches[0].clientX);
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchX.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    touchX.current = null;
-    if (dx < -50) go(1);
-    else if (dx > 50) go(-1);
-  };
 
-  if (error) return <ErrorBox message={error} />;
+  // 드래그(스와이프) — 손가락을 따라 움직이고 놓으면 스냅
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const startX = useRef<number | null>(null);
+  const [dragPx, setDragPx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!isPair) return;
+    startX.current = e.touches[0].clientX;
+    setDragging(true);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startX.current == null) return;
+    let dx = e.touches[0].clientX - startX.current;
+    if ((safeIdx === 0 && dx > 0) || (safeIdx === members.length - 1 && dx < 0)) dx *= 0.3; // 끝에서 저항감
+    setDragPx(dx);
+  };
+  const onTouchEnd = () => {
+    if (startX.current == null) return;
+    const w = wrapRef.current?.offsetWidth || 1;
+    const dx = dragPx;
+    startX.current = null;
+    setDragging(false);
+    setDragPx(0);
+    if (dx < -w * 0.2) go(1);
+    else if (dx > w * 0.2) go(-1);
+  };
 
   return (
     <div className="space-y-6">
@@ -95,12 +106,37 @@ export default function PlayerPage() {
         <p className="-mt-3 text-center text-xs text-muted">복식 페어 · 좌우로 스와이프해 파트너를 볼 수 있어요</p>
       )}
 
-      {/* 스와이프 영역 (선택된 선수 프로필) */}
-      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        {loading || !p ? <Spinner /> : <PlayerBody p={p} />}
+      {/* 스와이프 캐러셀 (페어 멤버 슬라이드) */}
+      <div
+        ref={wrapRef}
+        className="overflow-hidden"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <div
+          className="flex items-start"
+          style={{
+            transform: `translateX(calc(${-safeIdx * 100}% + ${dragPx}px))`,
+            transition: dragging ? "none" : "transform 0.32s ease",
+          }}
+        >
+          {members.map((m) => (
+            <div key={m.id} className="w-full flex-none">
+              <PlayerSlide id={m.id} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
+}
+
+function PlayerSlide({ id }: { id: string }) {
+  const { data: p, error } = useJson<PlayerProfile>(`/data/players/${id}.json`);
+  if (error) return <ErrorBox message={error} />;
+  if (!p) return <Spinner />;
+  return <PlayerBody p={p} />;
 }
 
 function PlayerBody({ p }: { p: PlayerProfile }) {
